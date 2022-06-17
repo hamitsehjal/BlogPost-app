@@ -9,48 +9,66 @@
 *
 *  GitHub Repository URL: https://github.com/hamitsehjal/web322-app
 *
-********************************************************************************/ 
+********************************************************************************/
 
 
 
 
-var express = require("express");
-var app = express();
+const express = require("express");
+const app = express();
 
-var blog=require("./blog-service");
+const blog = require("./blog-service");
 
-var path = require("path");
+const path = require("path");
 const { json } = require("express/lib/response");
 
-var HTTP_PORT = process.env.PORT || 8080;
+const env = require("dotenv").config()
+
+const multer = require("multer")
+const cloudinary = require("cloudinary").v2
+const streamifier = require("streamifier")
+
+// configuring my cloudinary
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+  secure: true
+})
+
+const HTTP_PORT = process.env.PORT
+
+const upload = multer(); // since we are not using disk storage
 
 // call this function after the http server starts listening for requests
 function onHttpStart() {
   console.log("Express http server listening on: " + HTTP_PORT);
 }
 
-app.use(express.static('public')); 
+//app.use(express.static('public'));
+
+
 
 // setup a 'route' to listen on the default url path (http://localhost)
-app.get("/", function(req,res){
-    res.redirect('/about');
+app.get("/", function (req, res) {
+  res.redirect('/about');
 });
 
 
 // setup another route to listen on /about
-app.get("/about", function(req,res){
-    res.sendFile(path.join(__dirname,"/views/about.html"));
-  });
+app.get("/about", function (req, res) {
+  res.sendFile(path.join(__dirname, "/views/about.html"));
+});
 
 // setup route to listen on /blog
-app.get("/blog",function(req,res)
-{
+app.get("/blog", function (req, res) {
   //	This route will return a JSON formatted string containing all of the posts within the posts.json 
   //file whose published property is set to true (ie: "published" posts).
-  blog.getPublishedPosts().then((data)=>{
+  blog.getPublishedPosts().then((data) => {
     res.json(data)
-  }).catch((err)=>{
-    res.send({message:err})
+  }).catch((err) => {
+    res.send({ message: err })
   })
 
 });
@@ -58,36 +76,116 @@ app.get("/blog",function(req,res)
 // setup route to listen on /posts
 //	This route will return a JSON formatted string containing all the posts within the posts.json files
 
-app.get("/posts",function(req,res)
-{
-  blog.getAllPosts().then((data)=>{
+app.get("/posts", function (req, res) {
+  blog.getAllPosts().then((data) => {
     res.json(data)
-  }).catch((err)=>{
-      res.send({message:err})
+  }).catch((err) => {
+    res.send({ message: err })
   })
 
 });
 
+// setup route to listen to /posts/add
+app.get("/posts/add", (req, res) => {
+  res.sendFile(path.join(__dirname, "/views/addPost.html"))
+})
 
+// setting the route to post on /posts/add
+app.post("/posts/add", upload.single("featureImage"), (req, res) => {
+  if (req.file) {
+    let streamUpload = (req) => {
+      return new Promise((resolve, reject) => {
+        let stream = cloudinary.uploader.upload_stream(
+          (error, result) => {
+            if (result) {
+              resolve(result);
+            } else {
+              reject(error);
+            }
+          }
+        );
+
+        streamifier.createReadStream(req.file.buffer).pipe(stream);
+      });
+    };
+
+    async function upload(req) {
+      let result = await streamUpload(req);
+      console.log(result);
+      return result;
+    }
+
+    upload(req).then((uploaded) => {
+      processPost(uploaded.url);
+    });
+  } else {
+    processPost("");
+  }
+
+  function processPost(imageUrl) {
+    req.body.featureImage = imageUrl;
+    blog.addPosts(req.body).then(()=>{
+      res.redirect("/posts");
+    }).catch((errMsg)=>{
+      res.send(errMsg)
+    })
+
+
+    // TODO: Process the req.body and add it as a new Blog Post before redirecting to /posts
+
+  }
+
+})
+
+
+// setup route to listen on "/post/value" 
+app.get("/post/:value" ,(req,res)=>{
+  blog.getPostById(req.params.value).then((post)=>{
+    res.json(post)
+  }).catch((errMsg)=>{
+    res.send(errMsg)
+  })
+})
+// setup route to listen on /posts?category=value 
+
+app.get("/posts/:value",(req,res)=>{
+  blog.getPostsByCategory(req.params.value).then((required_Posts)=>{
+    res.json(required_Posts)
+  }).catch((errMsg)=>{
+    res.send(errMsg)
+  })
+})
+
+// setup routes to listen on 	/posts?minDate=value
+
+app.get("/posts/:value",(req,res)=>{
+  blog.getPostsByMinDate(req.params.value).then((data_received)=>{
+    res.json(data_received)
+  }).catch((errMsg)=>{
+    res.send(errMsg)
+  })
+})
 // setup route to listen on /categories
-app.get("/categories",function(req,res)
-{
-  blog.getCategories().then((data)=>{
+app.get("/categories",  (req, res)=> {
+  blog.getCategories().then((data) => {
     res.json(data)
-  }).catch((err)=>{
-      res.send({message:err})
+  }).catch((err) => {
+    res.send({ message: err })
   })
 });
+
+
+
 
 // In case, no matching route exits
-app.use((req,res)=>{
+app.use((req, res) => {
   // res.status(404).send("PAGE NOT FOUND");
-  res.sendFile(path.join(__dirname,"/views/404.html"));
+  res.sendFile(path.join(__dirname, "/views/404.html"));
 })
 
 // setup http server to listen on HTTP_PORT
-blog.initialize().then(()=>{
-    app.listen(HTTP_PORT,onHttpStart)
-}).catch((err)=>{
-      console.log(err)
+blog.initialize().then(() => {
+  app.listen(HTTP_PORT, onHttpStart)
+}).catch((err) => {
+  console.log(err)
 })
