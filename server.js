@@ -46,7 +46,6 @@ function onHttpStart() {
   console.log("Express http server listening on: " + HTTP_PORT);
 }
 
-//app.use(express.static('public'));
 
 
 
@@ -74,16 +73,44 @@ app.get("/blog", function (req, res) {
 });
 
 // setup route to listen on /posts
-//	This route will return a JSON formatted string containing all the posts within the posts.json files
+// 	This route will return a JSON formatted string containing all the posts within the posts.json files
 
 app.get("/posts", function (req, res) {
-  blog.getAllPosts().then((data) => {
-    res.json(data)
-  }).catch((err) => {
-    res.send({ message: err })
-  })
-
+  // setup route to listen on /posts?category=value 
+  if(req.query.category){
+    blog.getPostsByCategory(req.query.category).then((data) => {
+      res.json(data)
+    }).catch((err) => {
+      res.send({message:errMsg})
+    })
+  }
+// setup routes to listen on 	/posts?minDate=value
+  else if(req.query.minDate){
+    blog.getPostsByMinDate(req.query.minDate).then((data) => {
+      res.json(data)
+    }).catch((err) => {
+      res.send({message:errMsg})
+    })
+  }
+  else{
+    blog.getAllPosts().then((data) => {
+      res.json(data)
+    }).catch((err) => {
+      res.send({message:errMsg})
+    })
+  }
 });
+
+
+
+// setup route to listen on "/post/value" 
+app.get("/post/:id", (req, res) => {
+  blog.getPostById(req.params.id).then((post) => {
+    res.json(post)
+  }).catch((err) => {
+    res.send({message:err})
+  })
+})
 
 // setup route to listen to /posts/add
 app.get("/posts/add", (req, res) => {
@@ -124,10 +151,10 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 
   function processPost(imageUrl) {
     req.body.featureImage = imageUrl;
-    blog.addPosts(req.body).then(()=>{
+    blog.addPosts(req.body).then(() => {
       res.redirect("/posts");
-    }).catch((errMsg)=>{
-      res.send(errMsg)
+    }).catch((err) => {
+      res.send({message:err})
     })
 
 
@@ -137,36 +164,8 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 
 })
 
-
-// setup route to listen on "/post/value" 
-app.get("/post/:value" ,(req,res)=>{
-  blog.getPostById(req.params.value).then((post)=>{
-    res.json(post)
-  }).catch((errMsg)=>{
-    res.send(errMsg)
-  })
-})
-// setup route to listen on /posts?category=value 
-
-app.get("/posts/:value",(req,res)=>{
-  blog.getPostsByCategory(req.params.value).then((required_Posts)=>{
-    res.json(required_Posts)
-  }).catch((errMsg)=>{
-    res.send(errMsg)
-  })
-})
-
-// setup routes to listen on 	/posts?minDate=value
-
-app.get("/posts/:value",(req,res)=>{
-  blog.getPostsByMinDate(req.params.value).then((data_received)=>{
-    res.json(data_received)
-  }).catch((errMsg)=>{
-    res.send(errMsg)
-  })
-})
 // setup route to listen on /categories
-app.get("/categories",  (req, res)=> {
+app.get("/categories", (req, res) => {
   blog.getCategories().then((data) => {
     res.json(data)
   }).catch((err) => {
@@ -189,3 +188,6 @@ blog.initialize().then(() => {
 }).catch((err) => {
   console.log(err)
 })
+
+
+

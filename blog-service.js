@@ -10,14 +10,12 @@ module.exports.initialize = () => {
         fs.readFile("./data/posts.json", "utf-8", (err, data) => {
             if (err) {
                 reject("unable to read file")
-                //console.log("unable to read file")
             }
             else {
                 posts = JSON.parse(data)
                 fs.readFile("./data/categories.json", "utf-8", (err, data) => {
                     if (err) {
                         reject("unable to read file")
-                        //console.log("unable to read file")
                     }
                     else {
                         categories = JSON.parse(data);
@@ -119,7 +117,7 @@ module.exports.getPostsByCategory = (category) => {
             resolve(posts_by_category)
         }
         else {
-            reject("No results returned")
+            reject("No Results Returned!!")
         }
     })
 }
@@ -140,7 +138,7 @@ module.exports.getPostsByMinDate = (minDateStr) => {
             resolve(posts_by_Date)
         }
         else {
-            reject("no results returned")
+            reject("No Results Returned!!")
         }
     })
 }
