@@ -103,14 +103,7 @@ app.get("/posts", function (req, res) {
 
 
 
-// setup route to listen on "/post/value" 
-app.get("/post/:id", (req, res) => {
-  blog.getPostById(req.params.id).then((post) => {
-    res.json(post)
-  }).catch((err) => {
-    res.send({message:err})
-  })
-})
+
 
 // setup route to listen to /posts/add
 app.get("/posts/add", (req, res) => {
@@ -164,6 +157,14 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 
 })
 
+// setup route to listen on "/post/value" 
+app.get("/post/:id", (req, res) => {
+  blog.getPostById(req.params.id).then((post) => {
+    res.json(post)
+  }).catch((err) => {
+    res.send({message:err})
+  })
+})
 // setup route to listen on /categories
 app.get("/categories", (req, res) => {
   blog.getCategories().then((data) => {
