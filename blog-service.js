@@ -1,4 +1,5 @@
 const fs = require("fs");
+const { resolve } = require("path");
 
 var posts = []
 var categories = []
@@ -87,7 +88,10 @@ module.exports.addPosts = (addPost) => {
             }
             // setting the id of the new post
             addPost.id = posts.length + 1;
-
+           
+            // To save current Date in variable Today
+            let today = new Date().toISOString().slice(0, 10)
+            addPost.postDate=today;
             // adding new post to posts array
             posts.push(addPost);
 
@@ -164,3 +168,21 @@ module.exports.getPostById = (id) => {
     })
 }
 
+
+module.exports.getPublishedPostsByCategory = (category) => {
+    let publishedPostsByCategory = [];
+    return new Promise((resolve, reject) => {
+        for (let i = 0; i < posts.length; i++) {
+            if (posts[i].published == true && posts[i].category == category) {
+                publishedPostsByCategory.push(posts[i]);
+            }
+        }
+
+        if (publishedPostsByCategory.length > 0) {
+            resolve(publishedPostsByCategory)
+        }
+        else {
+            reject("No Post Found!!!!")
+        }
+    })
+}
