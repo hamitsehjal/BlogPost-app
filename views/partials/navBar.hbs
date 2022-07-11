@@ -1,0 +1,16 @@
+<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <ul class="nav navbar-nav">
+        {{!-- <li><a href="/blog">Blog</a></li> --}}
+        {{#navLink "/blog"}}Blog{{/navLink}}
+        {{!-- <li class="active"><a href="/about">About</a></li> --}}
+        {{#navLink "/about"}}About{{/navLink}}
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+        {{#navLink "/posts"}}Posts{{/navLink}}
+        {{!-- <li><a href="/posts">Posts</a></li> --}}
+        {{#navLink "/categories"}}Categories{{/navLink}}
+        {{!-- <li><a href="/categories">Categories</a></li> --}}
+        {{#navLink "/posts/add"}}Add Post{{/navLink}}
+        {{!-- <li><a href="/posts/add">Add Post</a></li> --}}
+    </ul>
+</div><!-- /.navbar-collapse -->
