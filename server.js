@@ -292,8 +292,6 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
     })
 
 
-    // TODO: Process the req.body and add it as a new Blog Post before redirecting to /posts
-
   }
 
 })
@@ -323,9 +321,7 @@ app.get("/categories", (req, res) => {
 
 // In case, no matching route exits
 app.use((req, res) => {
-  // res.status(404).send("PAGE NOT FOUND");
-  //res.sendFile(path.join(__dirname, "/views/404.html"));
-  res.render('404',{data:null,layout:"error"})
+  res.render('404', { data: null, layout: "error" })
 })
 
 // setup http server to listen on HTTP_PORT
