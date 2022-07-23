@@ -19,7 +19,7 @@ const app = express();
 
 const blogData = require("./blog-service");
 const path = require("path");
-const { json } = require("express/lib/response");
+const { json, redirect } = require("express/lib/response");
 
 const env = require("dotenv").config()
 
@@ -49,7 +49,14 @@ app.engine('.hbs', exphbs.engine({
     },
     safeHTML: function (context) {
       return stripJs(context);
+    },
+    formatDate: function (dateObj) {
+      let year = dateObj.getFullYear();
+      let month = (dateObj.getMonth() + 1).toString();
+      let day = dateObj.getDate().toString();
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
+
 
 
 
@@ -84,7 +91,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-
+app.use(express.urlencoded({ extended: true }));
 
 // setup a 'route' to listen on the default url path (http://localhost)
 app.get("/", function (req, res) {
@@ -229,10 +236,15 @@ app.get("/posts", function (req, res) {
   }
   else {
     blogData.getAllPosts().then((data) => {
-      res.render('posts', {
-        posts: data,
-        layout: "main"
-      })
+      if (data.length > 0) {
+        res.render('posts', {
+          posts: data,
+          layout: "main"
+        })
+      }
+      else {
+        res.render("posts", { message: "no results" });
+      }
     }).catch((err) => {
       res.render("posts", { message: "no results", layout: "main" });
     })
@@ -242,12 +254,20 @@ app.get("/posts", function (req, res) {
 
 
 
-
 // setup route to listen to /posts/add
 app.get("/posts/add", (req, res) => {
-  res.render('addPost', {
-    data: null,
-    layout: "main"
+  blogData.getCategories().then((data) => {
+    res.render("addPost",
+      {
+        categories: data,
+        layout: "main"
+      });
+  }).catch(() => {
+    res.render("addPost",
+      {
+        categories: [],
+        layout: "main"
+      });
   })
 })
 
@@ -296,6 +316,23 @@ app.post("/posts/add", upload.single("featureImage"), (req, res) => {
 
 })
 
+// setup route to listen to /categories/add
+app.get("/categories/add", (req, res) => {
+  res.render('addCategory', {
+    data: null,
+    layout: "main"
+  })
+})
+
+// setting the route to post on /categories/add
+app.post("/categories/add", (req, res) => {
+  blogData.addCategory(req.body).then(() => {
+    res.redirect("/categories");
+  }).catch((err) => {
+    res.send({ message: err })
+  })
+
+})
 // setup route to listen on "/post/value" 
 app.get("/post/:id", (req, res) => {
   blogData.getPostById(req.params.id).then((post) => {
@@ -307,17 +344,38 @@ app.get("/post/:id", (req, res) => {
 // setup route to listen on /categories
 app.get("/categories", (req, res) => {
   blogData.getCategories().then((data) => {
-    res.render('categories', {
-      categories: data,
-      layout: "main"
-    })
+    if (data.length > 0) {
+      res.render('categories', {
+        categories: data,
+        layout: "main"
+      })
+    }
+    else {
+      res.render("Categories", { message: "no results" });
+
+    }
   }).catch((err) => {
     res.render('categories', { message: "no results", layout: "main" })
   })
 });
 
+// Listening on route "/categories/delete/:id"
+app.get("/categories/delete/:id", (req, res) => {
+  blogData.deleteCategoryById(req.params.id).then((data) => {
+    res.redirect("/categories");
+  }).catch((err) => {
+    res.status(500).send({ message: "Unable to Remove Category / Category not found)" })
+  })
+})
 
-
+// Listening on route "/posts/delete/:id"
+app.get("/posts/delete/:id", (req, res) => {
+  blogData.deletePostById(req.params.id).then((data) => {
+    res.redirect("/posts");
+  }).catch((err) => {
+    res.status(500).send({ message: "Unable to Remove Post / Post not found)" })
+  })
+})
 
 // In case, no matching route exits
 app.use((req, res) => {
