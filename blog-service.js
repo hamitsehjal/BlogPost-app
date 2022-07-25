@@ -93,15 +93,17 @@ module.exports.getCategories = () => {
 // Adding a Post
 module.exports.addPosts = (postData) => {
     return new Promise((resolve, reject) => {
-        postData.published = (postData.published) ? true : false;
 
+        
         for (var post in postData) {
             if (postData[post] == "") {
                 postData[post] = null;
             }
 
         }
-        postData.postDate = new Date();
+        postData.published = (postData.published) ? true : false;
+
+        postData.postDate = new Date().toISOString().slice(0, 10);;
 
         Post.create(postData).then((data) => {
             resolve(data);
