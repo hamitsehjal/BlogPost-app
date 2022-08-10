@@ -421,7 +421,7 @@ app.post("/login", (req, res) => {
   authData.checkUser(req.body).then((user) => {
     req.session.user = {
       userName: user.userName,
-      email: user.userName,
+      email: user.email,
       loginHistory: user.loginHistory
     }
     res.redirect('/posts');
